@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import personService from './services/persons'
+import Notification from './components/Notification'
 
 const Filter = ({ filter, handleFilterChange }) => {
   return (
@@ -50,6 +51,8 @@ const App = () => {
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [filter, setFilter] = useState('')
+  const [notificationMessage, setNotificationMessage] = useState(null)
+  const [errorMessage, setErrorMessage] = useState(null)
 
   useEffect(() => {
     personService.getAll().then(persons => {
@@ -68,8 +71,18 @@ const App = () => {
         
         personService.update(existingPerson.id, updatedPerson).then(returnedPerson => {
           setPersons(persons.map(person => person.id !== existingPerson.id ? person : returnedPerson))
+          setNotificationMessage(`Updated ${newName}`)
+          setTimeout(() => {
+            setNotificationMessage(null)
+          }, 5000)
           setNewName('')
           setNewNumber('')
+        })
+        .catch(error => {
+          setErrorMessage(`Information of ${newName} has already been removed from server`)
+          setTimeout(() => {
+            setErrorMessage(null)
+          }, 5000)
         })
       }
       return
@@ -87,6 +100,10 @@ const App = () => {
 
     personService.create(personObject).then(returnedPerson => {
       setPersons(persons.concat(returnedPerson))
+      setNotificationMessage(`Added ${newName}`)
+      setTimeout(() => {
+        setNotificationMessage(null)
+      }, 5000)
       setNewName('')
       setNewNumber('')
     })
@@ -113,6 +130,8 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={notificationMessage} />
+      <Notification message={errorMessage} isError={true} />
       <Filter filter={filter} handleFilterChange={handleFilterChange} />
       
       <h2>add a new</h2>
