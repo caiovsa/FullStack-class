@@ -79,7 +79,7 @@ const App = () => {
           setNewNumber('')
         })
         .catch(error => {
-          setErrorMessage(`Information of ${newName} has already been removed from server`)
+          setErrorMessage(error.response.data.error)
           setTimeout(() => {
             setErrorMessage(null)
           }, 5000)
@@ -106,6 +106,13 @@ const App = () => {
       }, 5000)
       setNewName('')
       setNewNumber('')
+    })
+    .catch(error => {
+      setErrorMessage(error.response.data.error)
+      //alert("Person validation failed: " + error.response.data.error)
+      setTimeout(() => {
+        setErrorMessage(null)
+      }, 5000)
     })
   }
 

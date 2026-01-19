@@ -86,6 +86,9 @@ app.put('/api/persons/:id', (request, response, next) => {
   if (!name) {
     return response.status(400).json({ error: 'name missing' })
   }
+  if (!number) {
+    return response.status(400).json({ error: 'number missing' })
+  }
   const person = {
     name: name,
     number: number,
