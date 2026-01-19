@@ -15,6 +15,19 @@ morgan.token('post', (req) => {
 })
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :post'))
 
+// Error middleware
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'invalid id format' })
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).send({ error: error.message })
+  }
+
+  response.status(500).send({ error: 'internal server error' })
+}
+
 
 // Usavamos essa lista quando tinhamos dados hardcoded(mooked data)
 // let persons =
@@ -51,13 +64,13 @@ app.get('/api/persons', (request, response) => {
   })
 })
 
-app.get('/api/persons/:id', (request, response) => {
+app.get('/api/persons/:id', (request, response, next) => {
   Person.findById(request.params.id).then(person => {
     response.json(person)
-  })
+  }).catch(next)
 })
 
-app.delete('/api/persons/:id', (request, response) => {
+app.delete('/api/persons/:id', (request, response, next) => {
   const id = request.params.id
   Person.findByIdAndDelete(id).then(result => {
     if (result) {
@@ -65,11 +78,22 @@ app.delete('/api/persons/:id', (request, response) => {
     } else {
       response.status(404).json({ error: 'person not found' })
     }
-  }).catch(error => {
-    response.status(400).json({ error: 'invalid id format' })
-  })
+  }).catch(next)
 })
 
+app.put('/api/persons/:id', (request, response, next) => {
+  const { name, number } = request.body
+  if (!name) {
+    return response.status(400).json({ error: 'name missing' })
+  }
+  const person = {
+    name: name,
+    number: number,
+  }
+  Person.findByIdAndUpdate(request.params.id, person, { new: true, runValidators: true }).then(updatedPerson => {
+    response.json(updatedPerson)
+  }).catch(next)
+})
 
 app.get('/info', (request, response) => {
     Person.countDocuments({}).then(count => {
@@ -85,7 +109,7 @@ app.get('/info', (request, response) => {
 //   return String(Math.floor(Math.random() * 1000000))
 // }
 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
   const body = request.body
 
   if (!body.name) {
@@ -100,7 +124,7 @@ app.post('/api/persons', (request, response) => {
 
   person.save().then(savedPerson => {
     response.json(savedPerson)
-  })
+  }).catch(next)
 })
 
 
@@ -111,6 +135,7 @@ app.post('/api/persons', (request, response) => {
 
 // app.use(unknownEndpoint)
 
+app.use(errorHandler)
 
 
 const PORT = process.env.PORT
