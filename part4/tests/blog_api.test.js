@@ -74,6 +74,54 @@ test('a valid blog can be added', async () => {
   assert.ok(contents.includes('Type wars'))
 })
 
+test('if the likes property is missing from the request, it will default to the value 0', async () => {
+  const newBlog = {
+    title: 'Blog without likes',
+    author: 'Test Author',
+    url: 'http://testurl.com',
+  }
+
+  const response = await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
+
+  assert.strictEqual(response.body.likes, 0)
+})
+
+test('blog without title is not added', async () => {
+  const newBlog = {
+    author: 'Test Author',
+    url: 'http://testurl.com',
+    likes: 1
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(400)
+
+  const blogsAtEnd = await Blog.find({})
+  assert.strictEqual(blogsAtEnd.length, initialBlogs.length)
+})
+
+test('blog without url is not added', async () => {
+  const newBlog = {
+    title: 'Test Title',
+    author: 'Test Author',
+    likes: 1
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(400)
+
+  const blogsAtEnd = await Blog.find({})
+  assert.strictEqual(blogsAtEnd.length, initialBlogs.length)
+})
+
 after(async () => {
   await mongoose.connection.close()
 })
